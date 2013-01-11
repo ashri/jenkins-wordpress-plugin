@@ -1,12 +1,19 @@
 package com.tearsofaunicorn.jenkins.plugins.notification.wordpress;
 
+import hudson.model.AbstractBuild;
+import hudson.model.Result;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
 /**
  * Build the message to be used as the WordPress post content
  */
 public class MessageBuilder {
 
     private final AbstractBuild<?, ?> build;
-    private final Result result;
+    private Result result;
+    private Result previousResult;
     private boolean changeSetComputed;
 
     public MessageBuilder(AbstractBuild<?, ?> build) {
@@ -81,4 +88,11 @@ public class MessageBuilder {
         return sha;
     }
 
+    public String buildTitle() {
+        return null;  //To change body of created methods use File | Settings | File Templates.
+    }
+
+    public String buildContent() {
+        return null;  //To change body of created methods use File | Settings | File Templates.
+    }
 }

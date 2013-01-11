@@ -1,29 +1,30 @@
 package com.tearsofaunicorn.jenkins.plugins.notification.wordpress;
 
+import com.tearsofaunicorn.wordpress.api.WordpressClient;
+import com.tearsofaunicorn.wordpress.api.WordpressClientConfig;
+import com.tearsofaunicorn.wordpress.api.model.Category;
+import com.tearsofaunicorn.wordpress.api.model.Post;
+import com.tearsofaunicorn.wordpress.api.model.Tag;
+import com.tearsofaunicorn.wordpress.api.transport.XmlRpcBridge;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.Result;
-import hudson.scm.ChangeLogSet;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class WordpressNotifier extends Notifier {
 
-    private static final Logger LOGGER = Logger.getLogger(CampfireNotifier.class.getName());
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
-    private WordPressClient client;
+    private WordpressClient client;
     private Category category;
     private Set<Tag> tags;
     private boolean smartNotify;
@@ -33,7 +34,7 @@ public class WordpressNotifier extends Notifier {
         initialize();
     }
 
-    public WordpressNotifier(String endpointUrl, String username, String password, boolean smartNotify) {
+    public WordpressNotifier(String endpointUrl, String username, String password, String category, String tags, boolean smartNotify) {
         super();
         initialize(endpointUrl, username, password, category, tags, smartNotify);
     }
@@ -52,7 +53,7 @@ public class WordpressNotifier extends Notifier {
         boolean publish = true;
         if (smartNotify) {
             AbstractBuild previousBuild = build.getPreviousBuild();
-            publish =  previousBuild == null
+            publish = previousBuild == null
                     || build.getResult() != Result.SUCCESS
                     || previousBuild.getResult() != Result.SUCCESS;
         }
@@ -62,30 +63,33 @@ public class WordpressNotifier extends Notifier {
         return true;
     }
 
-    private void publish(AbstractBuild<?, ?> build) throws IOException {
-        checkCampfireConnection();
-        String message = new MessageBuilder(build, jenkinsUrl).build();
-        Post newPost = buildPost();
-        wordpressClient.newPost(newPost);
-    }
-
-    private void checkWordpressConnection() {
-        if (wordpress == null) {
-            initialize();
-        }
-    }
-
-    private void initialize()  {
+    private void initialize() {
         initialize(DESCRIPTOR.getEndpointUrl(), DESCRIPTOR.getUsername(), DESCRIPTOR.getPassword(), DESCRIPTOR.getCategory(), DESCRIPTOR.getTags(), DESCRIPTOR.getSmartNotify());
     }
 
     private void initialize(String endpointUrl, String username, String password, String category, String tags, boolean smartNotify) {
-        this.wordpressClient = new WordpressClient(endpointUrl, username, password);
+        this.client = buildClient(username, password, endpointUrl);
+
         if (category != null && !category.isEmpty()) {
             this.category = new Category(category);
         }
         this.tags = initializeTags(tags);
         this.smartNotify = smartNotify;
+    }
+
+    private WordpressClient buildClient(String username, String password, String endpointUrl) {
+        URL url = convertEndpointUrl(endpointUrl);
+        WordpressClientConfig config = new WordpressClientConfig(username, password, url);
+        XmlRpcBridge bridge = new XmlRpcBridge(config);
+        return new WordpressClient(bridge);
+    }
+
+    private URL convertEndpointUrl(String endpointUrl) {
+        try {
+            return new URL(endpointUrl);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("URL for endpoint failed to validate", e);
+        }
     }
 
     private Set<Tag> initializeTags(String tagsString) {
@@ -97,6 +101,25 @@ public class WordpressNotifier extends Notifier {
             tags.add(new Tag(tag));
         }
         return tags;
+    }
+
+    private void publish(AbstractBuild<?, ?> build) throws IOException {
+        checkWordpressConnection();
+        MessageBuilder messageBuilder = new MessageBuilder(build);
+        Post newPost = buildPost(messageBuilder);
+        client.newPost(newPost);
+    }
+
+    private void checkWordpressConnection() {
+        if (this.client == null) {
+            initialize();
+        }
+    }
+
+    private Post buildPost(MessageBuilder messageBuilder) {
+        String title = messageBuilder.buildTitle();
+        String content = messageBuilder.buildContent();
+        return new Post(title, content);
     }
 
 }
