@@ -1,4 +1,5 @@
-package com.tearsofaunicorn.jenkins.plugins.notification.null;
+package com.tearsofaunicorn.jenkins.plugins.notification;
+
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.util.FormValidation;
