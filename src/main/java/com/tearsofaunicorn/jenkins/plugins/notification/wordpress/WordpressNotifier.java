@@ -119,7 +119,16 @@ public class WordpressNotifier extends Notifier {
     private Post buildPost(MessageBuilder messageBuilder) {
         String title = messageBuilder.buildTitle();
         String content = messageBuilder.buildContent();
-        return new Post(title, content);
+        Post post = new Post(title, content);
+        if (this.category != null) {
+            post.setCategory(this.category);
+        }
+        if (this.tags != null) {
+            for (Tag tag : this.tags) {
+                post.addTag(tag);
+            }
+        }
+        return post;
     }
 
 }

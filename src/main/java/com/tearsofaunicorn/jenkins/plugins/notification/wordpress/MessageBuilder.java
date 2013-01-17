@@ -2,19 +2,25 @@ package com.tearsofaunicorn.jenkins.plugins.notification.wordpress;
 
 import hudson.model.AbstractBuild;
 import hudson.model.Result;
+import hudson.scm.ChangeLogSet;
+import jenkins.model.Jenkins;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Build the message to be used as the WordPress post content
  */
 public class MessageBuilder {
 
+    private static final Logger LOGGER = Logger.getLogger(MessageBuilder.class.getName());
+
     private final AbstractBuild<?, ?> build;
     private Result result;
-    private Result previousResult;
-    private boolean changeSetComputed;
 
     public MessageBuilder(AbstractBuild<?, ?> build) {
         this.build = build;
@@ -23,9 +29,33 @@ public class MessageBuilder {
 
     public MessageBuilder withResult(Result result) {
         this.result = result;
+        return this;
     }
 
-/*
+    public String buildTitle() {
+        return getSimpleMessage();
+    }
+
+    public String buildContent() {
+        return getMessage();
+    }
+
+    private String getSimpleMessage() {
+        String resultString = result.toString();
+        return build.getProject().getName() + " " + build.getDisplayName() + ": " + resultString;
+    }
+
+    private String getMessage() {
+        String resultString = result.toString();
+        //if (!smartNotify && result == Result.SUCCESS) resultString = resultString.toLowerCase();
+        String message = build.getProject().getName() + " " + build.getDisplayName() + " \"" + getChangeString() + "\": " + resultString;
+        //if (smartNotify || result != Result.SUCCESS)) {
+            message = message + " (" + Jenkins.getInstance().getRootUrl() + build.getUrl() + ")";
+        //}
+        return message;
+    }
+
+    private String getChangeString() {
         String changeString = "No changes";
         if (!build.hasChangeSetComputed()) {
             changeString = "Changes not determined";
@@ -65,14 +95,8 @@ public class MessageBuilder {
                 changeString = commitMsg + " - " + entry.getAuthor().toString();
             }
         }
-        String resultString = result.toString();
-        if (!smartNotify && result == Result.SUCCESS) resultString = resultString.toLowerCase();
-        String message = build.getProject().getName() + " " + build.getDisplayName() + " \"" + changeString + "\": " + resultString;
-        if (smartNotify || result != Result.SUCCESS)) {
-            message = message + " (" + Jenkins.getInstance().getRootUrl() + build.getUrl() + ")";
-        }
-
- */
+        return changeString;
+    }
 
     private String getCommitHash(String changeLogPath) throws IOException {
         String sha = "";
@@ -86,13 +110,5 @@ public class MessageBuilder {
         }
         reader.close();
         return sha;
-    }
-
-    public String buildTitle() {
-        return null;  //To change body of created methods use File | Settings | File Templates.
-    }
-
-    public String buildContent() {
-        return null;  //To change body of created methods use File | Settings | File Templates.
     }
 }
