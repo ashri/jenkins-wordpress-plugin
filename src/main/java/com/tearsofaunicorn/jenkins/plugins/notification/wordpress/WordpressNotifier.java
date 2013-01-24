@@ -63,6 +63,11 @@ public class WordpressNotifier extends Notifier {
         return true;
     }
 
+    public boolean ping() {
+        Object result = this.client.getPostTypes();
+        return result != null;
+    }
+
     private void initialize() {
         initialize(DESCRIPTOR.getEndpointUrl(), DESCRIPTOR.getUsername(), DESCRIPTOR.getPassword(), DESCRIPTOR.getCategory(), DESCRIPTOR.getTags(), DESCRIPTOR.getSmartNotify());
     }
@@ -130,5 +135,4 @@ public class WordpressNotifier extends Notifier {
         }
         return post;
     }
-
 }

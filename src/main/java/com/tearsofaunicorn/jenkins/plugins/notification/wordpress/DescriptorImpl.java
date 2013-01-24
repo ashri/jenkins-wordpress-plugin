@@ -3,9 +3,10 @@ package com.tearsofaunicorn.jenkins.plugins.notification.wordpress;
 import hudson.model.AbstractProject;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Publisher;
+import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,7 +14,7 @@ public class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
     private static final Logger LOGGER = Logger.getLogger(DescriptorImpl.class.getName());
 
-    private boolean enabled = false;
+    private boolean enabled = true;
     private String endpointUrl;
     private String username;
     private String password;
@@ -59,34 +60,32 @@ public class DescriptorImpl extends BuildStepDescriptor<Publisher> {
     }
 
     @Override
-    public Publisher newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-        String endpointUrl = req.getParameter("endpointUrl");
+    public Publisher newInstance(StaplerRequest req, JSONObject json) throws FormException {
+        String endpointUrl = json.optString("endpointUrl");
         if (endpointUrl == null || endpointUrl.isEmpty()) {
             endpointUrl = this.endpointUrl;
         }
-        String username = req.getParameter("username");
+        String username = json.optString("username");
         if (username == null || username.isEmpty()) {
             username = this.username;
         }
-        String password = req.getParameter("password");
+        String password = json.optString("password");
         if (password == null || password.isEmpty()) {
             password = this.password;
         }
-        String category = req.getParameter("category");
+        String category = json.getString("category");
         if (category == null || category.isEmpty()) {
             category = this.category;
         }
-        String tags = req.getParameter("tags");
+        String tags = json.getString("tags");
         if (tags == null || tags.isEmpty()) {
             tags = this.tags;
         }
-        String smartNotify = req.getParameter("smartNotify");
-        if ((smartNotify == null || smartNotify.isEmpty()) && this.smartNotify) {
-            smartNotify = String.valueOf(this.smartNotify);
-        }
+        boolean smartNotify = json.getBoolean("smartNotify");
 
         try {
-            return new WordpressNotifier(endpointUrl, username, password, category, tags, smartNotify != null);
+
+            return new WordpressNotifier(endpointUrl, username, password, category, tags, smartNotify);
 
         } catch (Exception e) {
             String message = "Failed to initialize WordPress Notifier - check your WordPress Notifier configuration settings: " + e.getMessage();
@@ -97,12 +96,12 @@ public class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
     @Override
     public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
-        this.endpointUrl = req.getParameter("endpointUrl");
-        this.username = req.getParameter("username");
-        this.password = req.getParameter("password");
-        this.category = req.getParameter("category");
-        this.tags = req.getParameter("tags");
-        this.smartNotify = req.getParameter("smartNotify") != null;
+        this.endpointUrl = json.getString("endpointUrl");
+        this.username = json.getString("username");
+        this.password = json.getString("password");
+        this.category = json.getString("category");
+        this.tags = json.getString("tags");
+        this.smartNotify = json.getBoolean("smartNotify");
 
         try {
             new WordpressNotifier(endpointUrl, username, password, category, tags, smartNotify);
@@ -119,6 +118,19 @@ public class DescriptorImpl extends BuildStepDescriptor<Publisher> {
     @Override
     public String getDisplayName() {
         return "WordPress Notification";
+    }
+
+    public FormValidation doTestConnection(@QueryParameter String endpointUrl, @QueryParameter String username, @QueryParameter String password) {
+        String errorMessage = "Wordpress connection failed";
+        try {
+            boolean connected = new WordpressNotifier(endpointUrl, username, password, null, null, false).ping();
+            if (connected) {
+                return FormValidation.ok("Wordpress connection OK");
+            }
+            return FormValidation.error(errorMessage);
+        } catch (Exception e) {
+            return FormValidation.error(e, errorMessage);
+        }
     }
 
 }

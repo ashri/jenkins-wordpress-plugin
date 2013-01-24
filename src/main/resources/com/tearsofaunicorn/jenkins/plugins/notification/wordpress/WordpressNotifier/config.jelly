@@ -3,10 +3,10 @@
     This jelly script is used for per-project configuration.
     See global.jelly for a general discussion about jelly script.
   -->
-    <f:entry field="category" title="${%category.project.title}">
+    <f:entry field="category" title="Project Category">
       <f:textbox />
     </f:entry>
-    <f:entry field="tags" title="${%tags.project.title}">
+    <f:entry field="tags" title="Project Tags">
       <f:textbox />
     </f:entry>
 </j:jelly>

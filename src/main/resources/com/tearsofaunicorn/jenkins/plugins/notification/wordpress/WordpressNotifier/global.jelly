@@ -13,24 +13,24 @@
   -->
 
 <f:section title="Global WordPress Notifier Settings">
-    <f:entry field="endpointUrl" title="${%endpointUrl.title}" help="${rootURL}/plugin/wordpress/help-endpointUrl.html">
+    <f:entry field="endpointUrl" title="WordPress XML-RPC Endpoint URL">
       <f:textbox />
     </f:entry>
-    <f:entry field="username" title="${%username.title}" help="${rootURL}/plugin/wordpress/help-username.html">
+    <f:entry field="username" title="Username">
       <f:textbox />
     </f:entry>
-    <f:entry field="password" title="${%password.title}" help="${rootURL}/plugin/wordpress/help-password.html">
+    <f:entry field="password" title="Password">
         <f:password />
     </f:entry>
-    <f:validateButton title="${%testConnection.title}" progress="${%testConnection.progress}" method="testConnection" with="endpointUrl,username,password" />
+    <f:validateButton title="Test Connection" progress="Testing..." method="testConnection" with="endpointUrl,username,password" />
 
-    <f:entry field="category" title="${%category.default.title}" help="${rootURL}/plugin/wordpress/help-category.html">
+    <f:entry field="category" title="Default Category">
         <f:textbox />
     </f:entry>
-    <f:entry field="tags" title="${%tags.default.title}" help="${rootURL}/plugin/wordpress/help-tags.html">
+    <f:entry field="tags" title="Default Tags">
         <f:textbox />
     </f:entry>
-    <f:entry field="smartNotify" title="${%smartNotify.title}" help="${rootURL}/plugin/wordpress/help-smartNotify.html">
+    <f:entry field="smartNotify" title="Enable Smart Notification?">
         <f:checkbox />
     </f:entry>
   </f:section>
